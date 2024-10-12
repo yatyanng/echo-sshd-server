@@ -2,3 +2,5 @@ ssh-server:
   port: 1022
   private-key:
     location: "conf/private.key"
+  automatic-replies:
+    location: "conf/replies.properties"
