@@ -54,7 +54,7 @@ public class SshConfig {
 				return StringUtils.equals(username, rootUsername);
 			}
 		});
-		sshd.setShellFactory(new EchoShellFactory());
+		sshd.setShellFactory(applicationContext.getBean(EchoShellFactory.class));
 		sshd.setCommandFactory(command -> applicationContext.getBean(OnetimeCommand.class, command));
 		sshd.start();
 		return sshd;

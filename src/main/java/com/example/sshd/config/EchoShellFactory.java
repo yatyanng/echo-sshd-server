@@ -5,23 +5,35 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
+import com.example.sshd.util.ReplyUtil;
+
+@Component
 public class EchoShellFactory implements Factory<Command> {
 
 	private static final Logger logger = LoggerFactory.getLogger(EchoShellFactory.class);
 
+	@Autowired
+	Properties repliesProperties;
+
+	@Autowired
+	ApplicationContext applicationContext;
+
 	@Override
 	public Command create() {
-		return new EchoShell();
+		return new EchoShell(repliesProperties);
 	}
 
 	public static class EchoShell implements Command, Runnable {
@@ -32,6 +44,11 @@ public class EchoShellFactory implements Factory<Command> {
 		private ExitCallback callback;
 		private Environment environment;
 		private Thread thread;
+		private Properties repliesProperties;
+
+		public EchoShell(Properties repliesProperties) {
+			this.repliesProperties = repliesProperties;
+		}
 
 		public InputStream getIn() {
 			return in;
@@ -83,8 +100,9 @@ public class EchoShellFactory implements Factory<Command> {
 
 		@Override
 		public void run() {
+			String prompt = repliesProperties.getProperty("prompt","$ ");
 			try {
-				out.write("$ ".getBytes());
+				out.write(prompt.getBytes());
 				out.flush();
 
 				BufferedReader r = new BufferedReader(new InputStreamReader(in));
@@ -93,16 +111,8 @@ public class EchoShellFactory implements Factory<Command> {
 				while (!Thread.currentThread().isInterrupted()) {
 					int s = r.read();
 					if (s == 13 || s == 10) {
-
-						if (StringUtils.isBlank(command)) {
-							logger.info("Blank command detected: {}", command);
-							out.write(("\r\n$ ").getBytes());
-						} else if (StringUtils.equals(command, "exit")) {
-							logger.info("Exiting command detected: {}", command);
+						if (!ReplyUtil.replyToCommand(repliesProperties, command, out, prompt)) {
 							return;
-						} else {
-							logger.info("Command not found: {}", command);
-							out.write(("\r\nCommand '" + command + "' not found. Try 'exit'.\r\n$ ").getBytes());
 						}
 						command = "";
 					} else {

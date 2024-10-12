@@ -5,23 +5,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.example.sshd.util.ReplyUtil;
+
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class OnetimeCommand implements Command {
-
-	private static final Logger logger = LoggerFactory.getLogger(OnetimeCommand.class);
 
 	@Autowired
 	Properties repliesProperties;
@@ -76,26 +72,7 @@ public class OnetimeCommand implements Command {
 	@Override
 	public void start(Environment env) throws IOException {
 		environment = env;
-		String cmdHash = DigestUtils.md5Hex(command).toUpperCase();
-		logger.info("command = {}, cmdHash = {}", command, cmdHash);
-
-		if (StringUtils.equals(command, "exit")) {
-			logger.info("Exiting command detected: {}", command);
-			out.write(("\r\nExiting...\r\n").getBytes());
-		} else if (repliesProperties.containsKey(command)) {
-			logger.info("Known command detected: {}", command);
-			String reply = repliesProperties.getProperty(command).replace("\\r", "\r").replace("\\n", "\n")
-					.replace("\\t", "\t");
-			out.write(("\r\n" + reply + "\r\n").getBytes());
-		} else if (repliesProperties.containsKey(cmdHash)) {
-			logger.info("Known command-hash detected: {}", cmdHash);
-			String reply = repliesProperties.getProperty(cmdHash).replace("\\r", "\r").replace("\\n", "\n")
-					.replace("\\t", "\t");
-			out.write(("\r\n" + reply + "\r\n").getBytes());
-		} else {
-			logger.info("Command not found: {}", command);
-			out.write(("\r\nCommand '" + command + "' not found. Try 'exit'.\r\n").getBytes());
-		}
+		ReplyUtil.replyToCommand(repliesProperties, command, out, "");
 		out.flush();
 		callback.onExit(0);
 	}
