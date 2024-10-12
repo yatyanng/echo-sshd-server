@@ -9,6 +9,8 @@ import org.apache.sshd.SshServer;
 import org.apache.sshd.server.PasswordAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SshConfig {
 
+	private static final Logger logger = LoggerFactory.getLogger(SshConfig.class);
+	
 	@Value("${ssh-server.port}")
 	private int port;
 
@@ -34,6 +38,7 @@ public class SshConfig {
 		sshd.setPasswordAuthenticator(new PasswordAuthenticator() {
 			@Override
 			public boolean authenticate(final String username, final String password, final ServerSession session) {
+				logger.info("Login Attempt: username = {}, password = {}", username, password);
 				return StringUtils.equals(username, rootUsername);
 			}
 		});
