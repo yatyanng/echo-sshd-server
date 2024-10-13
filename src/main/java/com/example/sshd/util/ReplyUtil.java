@@ -10,14 +10,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ReplyUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(ReplyUtil.class);
 	private static final Logger notFoundLogger = LoggerFactory.getLogger("not_found");
 
-	public static boolean replyToCommand(String command, OutputStream out, String prompt, Properties hashReplies,
-			Properties regexMapping) throws IOException {
+	@Autowired
+	Properties hashReplies;
+	
+	@Autowired
+	Properties regexMapping;
+
+	public boolean replyToCommand(String command, OutputStream out, String prompt) throws IOException {
 
 		String cmdHash = DigestUtils.md5Hex(command.trim()).toUpperCase();
 

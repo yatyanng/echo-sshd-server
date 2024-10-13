@@ -23,10 +23,22 @@
 				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
 			</Policies>
 		</RollingFile>
+		<RollingFile name="LogToIpInfo"
+			filePattern="logs/ip_info.%d{yyyy-MM-dd}.log"
+			immediateFlush="true">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%t] %c : %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
+			</Policies>
+		</RollingFile>
 	</Appenders>
 	<Loggers>
 		<Logger name="not_found" level="info" additivity="false">
 			<AppenderRef ref="LogToConsole" />
+		</Logger>
+		<Logger name="ip_info" level="info" additivity="false">
+			<AppenderRef ref="LogToIpInfo" />
 		</Logger>
 		<Root level="info">
 			<AppenderRef ref="LogToConsole" />

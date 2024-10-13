@@ -15,7 +15,6 @@ import org.apache.sshd.server.ExitCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.example.sshd.util.ReplyUtil;
@@ -26,13 +25,10 @@ public class EchoShellFactory implements Factory<Command> {
 	private static final Logger logger = LoggerFactory.getLogger(EchoShellFactory.class);
 
 	@Autowired
-	Properties hashReplies;
-	
-	@Autowired
-	Properties regexMapping;
+	ReplyUtil replyUtil;
 
 	@Autowired
-	ApplicationContext applicationContext;
+	Properties hashReplies;
 
 	@Override
 	public Command create() {
@@ -41,28 +37,12 @@ public class EchoShellFactory implements Factory<Command> {
 
 	public class EchoShell implements Command, Runnable {
 
-		private InputStream in;
-		private OutputStream out;
-		private OutputStream err;
-		private ExitCallback callback;
-		private Environment environment;
-		private Thread thread;
-
-		public InputStream getIn() {
-			return in;
-		}
-
-		public OutputStream getOut() {
-			return out;
-		}
-
-		public OutputStream getErr() {
-			return err;
-		}
-
-		public Environment getEnvironment() {
-			return environment;
-		}
+		protected InputStream in;
+		protected OutputStream out;
+		protected OutputStream err;
+		protected ExitCallback callback;
+		protected Environment environment;
+		protected Thread thread;
 
 		@Override
 		public void setInputStream(InputStream in) {
@@ -87,6 +67,7 @@ public class EchoShellFactory implements Factory<Command> {
 		@Override
 		public void start(Environment env) throws IOException {
 			environment = env;
+			logger.info("environment: {}", environment.getEnv());
 			thread = new Thread(this, UUID.randomUUID().toString());
 			thread.start();
 		}
@@ -109,7 +90,7 @@ public class EchoShellFactory implements Factory<Command> {
 				while (!Thread.currentThread().isInterrupted()) {
 					int s = r.read();
 					if (s == 13 || s == 10) {
-						if (!ReplyUtil.replyToCommand(command, out, prompt, hashReplies, regexMapping)) {
+						if (!replyUtil.replyToCommand(command, out, prompt)) {
 							out.flush();
 							return;
 						}

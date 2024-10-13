@@ -8,4 +8,4 @@ I share this project so that others can learn this as well.
 mvn clean package
 
 ## How to run
-java -jar echo-sshd-server-<version>.jar
+java -jar echo-sshd-server-{version}.jar

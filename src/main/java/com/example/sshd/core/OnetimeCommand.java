@@ -3,7 +3,6 @@ package com.example.sshd.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Properties;
 
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
@@ -18,12 +17,9 @@ import com.example.sshd.util.ReplyUtil;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class OnetimeCommand implements Command {
-
-	@Autowired
-	Properties hashReplies;
 	
 	@Autowired
-	Properties regexMapping;
+	ReplyUtil replyUtil;
 
 	private InputStream in;
 	private OutputStream out;
@@ -75,7 +71,7 @@ public class OnetimeCommand implements Command {
 	@Override
 	public void start(Environment env) throws IOException {
 		environment = env;
-		ReplyUtil.replyToCommand(command, out, "", hashReplies, regexMapping);
+		replyUtil.replyToCommand(command, out, "");
 		out.flush();
 		callback.onExit(0);
 	}
