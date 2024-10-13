@@ -26,10 +26,10 @@
 	</Appenders>
 	<Loggers>
 		<Logger name="not_found" level="info" additivity="false">
-			<AppenderRef ref="LogToNotFound" />
+			<AppenderRef ref="LogToConsole" />
 		</Logger>
 		<Root level="info">
-			<AppenderRef ref="LogToFile" />
+			<AppenderRef ref="LogToConsole" />
 		</Root>
 	</Loggers>
 </Configuration>

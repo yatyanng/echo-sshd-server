@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Properties;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.PasswordAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
+import com.example.sshd.core.EchoSessionListener;
 import com.example.sshd.core.EchoShellFactory;
 import com.example.sshd.core.OnetimeCommand;
 
@@ -35,8 +36,8 @@ public class SshConfig {
 	@Value("${ssh-server.private-key.location}")
 	private String pkLocation;
 
-	@Value("${ssh-server.root.username:root}")
-	private String rootUsername;
+	@Value("${ssh-server.login.usernames:root}")
+	private String[] usernames;
 
 	@Value("${ssh-server.hash-replies.location}")
 	private String hashReplies;
@@ -57,12 +58,14 @@ public class SshConfig {
 			@Override
 			public boolean authenticate(final String username, final String password, final ServerSession session) {
 				logger.info("Login Attempt: username = {}, password = {}", username, password);
-				return StringUtils.equals(username, rootUsername);
+				return Arrays.asList(usernames).contains(username);
 			}
 		});
 		sshd.setShellFactory(applicationContext.getBean(EchoShellFactory.class));
 		sshd.setCommandFactory(command -> applicationContext.getBean(OnetimeCommand.class, command));
+		
 		sshd.start();
+		sshd.getSessionFactory().addListener(applicationContext.getBean(EchoSessionListener.class));
 		return sshd;
 	}
 
