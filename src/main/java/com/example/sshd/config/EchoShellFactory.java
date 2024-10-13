@@ -100,7 +100,7 @@ public class EchoShellFactory implements Factory<Command> {
 
 		@Override
 		public void run() {
-			String prompt = repliesProperties.getProperty("prompt","$ ");
+			String prompt = repliesProperties.getProperty("prompt", "$ ");
 			try {
 				out.write(prompt.getBytes());
 				out.flush();
@@ -116,8 +116,16 @@ public class EchoShellFactory implements Factory<Command> {
 						}
 						command = "";
 					} else {
-						out.write(s);
-						command += (char) s;
+						logger.trace("input character: {}", s);
+						if (s == 127) {
+							if (command.length() > 0) {
+								command = command.substring(0, command.length() - 1);
+								out.write(s);
+							}
+						} else if (s >= 32 && s < 127) {
+							command += (char) s;
+							out.write(s);
+						}
 					}
 					out.flush();
 				}
