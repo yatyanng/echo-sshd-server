@@ -21,6 +21,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
+import com.example.sshd.core.EchoShellFactory;
+import com.example.sshd.core.OnetimeCommand;
+
 @Configuration
 public class SshConfig {
 
@@ -35,8 +38,11 @@ public class SshConfig {
 	@Value("${ssh-server.root.username:root}")
 	private String rootUsername;
 
-	@Value("${ssh-server.automatic-replies.location}")
-	private String repliesProperties;
+	@Value("${ssh-server.hash-replies.location}")
+	private String hashReplies;
+	
+	@Value("${ssh-server.regex-mapping.location}")
+	private String regexMapping;
 
 	@Autowired
 	ApplicationContext applicationContext;
@@ -62,9 +68,19 @@ public class SshConfig {
 
 	@Bean
 	@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-	public Properties repliesProperties() throws IOException {
+	public Properties hashReplies() throws IOException {
 		Properties prop = new Properties();
-		File configFile = new File(repliesProperties);
+		File configFile = new File(hashReplies);
+		FileInputStream stream = new FileInputStream(configFile);
+		prop.load(stream);
+		return prop;
+	}
+	
+	@Bean
+	@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+	public Properties regexMapping() throws IOException {
+		Properties prop = new Properties();
+		File configFile = new File(regexMapping);
 		FileInputStream stream = new FileInputStream(configFile);
 		prop.load(stream);
 		return prop;

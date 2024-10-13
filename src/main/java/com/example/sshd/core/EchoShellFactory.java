@@ -1,4 +1,4 @@
-package com.example.sshd.config;
+package com.example.sshd.core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,17 +26,20 @@ public class EchoShellFactory implements Factory<Command> {
 	private static final Logger logger = LoggerFactory.getLogger(EchoShellFactory.class);
 
 	@Autowired
-	Properties repliesProperties;
+	Properties hashReplies;
+	
+	@Autowired
+	Properties regexMapping;
 
 	@Autowired
 	ApplicationContext applicationContext;
 
 	@Override
 	public Command create() {
-		return new EchoShell(repliesProperties);
+		return new EchoShell();
 	}
 
-	public static class EchoShell implements Command, Runnable {
+	public class EchoShell implements Command, Runnable {
 
 		private InputStream in;
 		private OutputStream out;
@@ -44,11 +47,6 @@ public class EchoShellFactory implements Factory<Command> {
 		private ExitCallback callback;
 		private Environment environment;
 		private Thread thread;
-		private Properties repliesProperties;
-
-		public EchoShell(Properties repliesProperties) {
-			this.repliesProperties = repliesProperties;
-		}
 
 		public InputStream getIn() {
 			return in;
@@ -100,7 +98,7 @@ public class EchoShellFactory implements Factory<Command> {
 
 		@Override
 		public void run() {
-			String prompt = repliesProperties.getProperty("prompt", "$ ");
+			String prompt = hashReplies.getProperty("prompt", "$ ");
 			try {
 				out.write(prompt.getBytes());
 				out.flush();
@@ -111,7 +109,8 @@ public class EchoShellFactory implements Factory<Command> {
 				while (!Thread.currentThread().isInterrupted()) {
 					int s = r.read();
 					if (s == 13 || s == 10) {
-						if (!ReplyUtil.replyToCommand(repliesProperties, command, out, prompt)) {
+						if (!ReplyUtil.replyToCommand(command, out, prompt, hashReplies, regexMapping)) {
+							out.flush();
 							return;
 						}
 						command = "";

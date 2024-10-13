@@ -1,4 +1,4 @@
-package com.example.sshd.config;
+package com.example.sshd.core;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +20,10 @@ import com.example.sshd.util.ReplyUtil;
 public class OnetimeCommand implements Command {
 
 	@Autowired
-	Properties repliesProperties;
+	Properties hashReplies;
+	
+	@Autowired
+	Properties regexMapping;
 
 	private InputStream in;
 	private OutputStream out;
@@ -72,7 +75,7 @@ public class OnetimeCommand implements Command {
 	@Override
 	public void start(Environment env) throws IOException {
 		environment = env;
-		ReplyUtil.replyToCommand(repliesProperties, command, out, "");
+		ReplyUtil.replyToCommand(command, out, "", hashReplies, regexMapping);
 		out.flush();
 		callback.onExit(0);
 	}
