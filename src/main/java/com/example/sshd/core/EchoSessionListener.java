@@ -40,7 +40,13 @@ public class EchoSessionListener implements SessionListener {
 
 	@Override
 	public void sessionClosed(Session session) {
-		logger.info("sessionCreated: {}", session);
+		logger.info("sessionClosed: {}", session);
+		if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
+			InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
+			String remoteIpAddress = remoteAddress.getAddress().getHostAddress();
+			logger.info("removing session: {} -> {}", remoteIpAddress, remoteSessionMapping.get(remoteIpAddress));
+			remoteSessionMapping.remove(remoteIpAddress);
+		}
 	}
 
 }
