@@ -7,6 +7,8 @@ import java.io.OutputStream;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.session.ServerSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -16,7 +18,7 @@ import com.example.sshd.util.ReplyUtil;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class OnetimeCommand implements Command {
+public class OnetimeCommand implements Command, SessionAware {
 	
 	@Autowired
 	ReplyUtil replyUtil;
@@ -27,6 +29,7 @@ public class OnetimeCommand implements Command {
 	private ExitCallback callback;
 	private Environment environment;
 	private String command;
+	private ServerSession session;
 
 	public OnetimeCommand(String cmd) {
 		command = cmd;
@@ -71,7 +74,7 @@ public class OnetimeCommand implements Command {
 	@Override
 	public void start(Environment env) throws IOException {
 		environment = env;
-		replyUtil.replyToCommand(command, out, "");
+		replyUtil.replyToCommand(command, out, "", session);
 		out.flush();
 		callback.onExit(0);
 	}
@@ -82,5 +85,10 @@ public class OnetimeCommand implements Command {
 
 	public ExitCallback getCallback() {
 		return callback;
+	}
+
+	@Override
+	public void setSession(ServerSession session) {
+		this.session = session;
 	}
 }

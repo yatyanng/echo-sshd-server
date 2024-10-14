@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -12,6 +14,8 @@ import org.apache.sshd.common.Factory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +34,15 @@ public class EchoShellFactory implements Factory<Command> {
 	@Autowired
 	Properties hashReplies;
 
+	@Autowired
+	Map<String, String> ipInfoMapping;
+
 	@Override
 	public Command create() {
 		return new EchoShell();
 	}
 
-	public class EchoShell implements Command, Runnable {
+	public class EchoShell implements Command, Runnable, SessionAware {
 
 		protected InputStream in;
 		protected OutputStream out;
@@ -43,6 +50,7 @@ public class EchoShellFactory implements Factory<Command> {
 		protected ExitCallback callback;
 		protected Environment environment;
 		protected Thread thread;
+		protected ServerSession session;
 
 		@Override
 		public void setInputStream(InputStream in) {
@@ -67,8 +75,16 @@ public class EchoShellFactory implements Factory<Command> {
 		@Override
 		public void start(Environment env) throws IOException {
 			environment = env;
-			logger.info("environment: {}", environment.getEnv());
-			thread = new Thread(this, UUID.randomUUID().toString());
+			
+			if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
+				InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
+				String remoteIpAddress = remoteAddress.getAddress().getHostAddress();
+				thread = new Thread(this, remoteIpAddress);
+			} else {
+				thread = new Thread(this, session.getIoSession().getRemoteAddress().toString());
+			}
+			
+			logger.info("environment: {}, thread-name: {}", environment.getEnv(), thread.getName());
 			thread.start();
 		}
 
@@ -90,7 +106,7 @@ public class EchoShellFactory implements Factory<Command> {
 				while (!Thread.currentThread().isInterrupted()) {
 					int s = r.read();
 					if (s == 13 || s == 10) {
-						if (!replyUtil.replyToCommand(command, out, prompt)) {
+						if (!replyUtil.replyToCommand(command, out, prompt, session)) {
 							out.flush();
 							return;
 						}
@@ -114,6 +130,11 @@ public class EchoShellFactory implements Factory<Command> {
 			} finally {
 				callback.onExit(0);
 			}
+		}
+
+		@Override
+		public void setSession(ServerSession session) {
+			this.session = session;
 		}
 	}
 }

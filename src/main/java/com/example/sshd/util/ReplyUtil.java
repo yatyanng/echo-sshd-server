@@ -2,12 +2,15 @@ package com.example.sshd.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +24,30 @@ public class ReplyUtil {
 
 	@Autowired
 	Properties hashReplies;
-	
+
 	@Autowired
 	Properties regexMapping;
 
-	public boolean replyToCommand(String command, OutputStream out, String prompt) throws IOException {
+	@Autowired
+	Map<String, String> ipInfoMapping;
+
+	public boolean replyToCommand(String command, OutputStream out, String prompt, ServerSession session)
+			throws IOException {
 
 		String cmdHash = DigestUtils.md5Hex(command.trim()).toUpperCase();
 
-		if (StringUtils.equals(command.trim(), "exit")) {
+		if (StringUtils.equals(command.trim(), "about")) {
+			logger.info("[{}] About command detected: {}", cmdHash, command.trim());
+			if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
+				InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
+				String remoteIpAddress = remoteAddress.getAddress().getHostAddress();
+				out.write(String.format("\r\n%s\r\n%s", ipInfoMapping.get(remoteIpAddress), prompt).getBytes());
+			} else {
+				out.write(String.format("\r\n%s\r\n%s", session.getIoSession().getRemoteAddress(), prompt).getBytes());
+			}
+		} else if (StringUtils.equals(command.trim(), "exit")) {
 			logger.info("[{}] Exiting command detected: {}", cmdHash, command.trim());
-			out.write(("\r\nExiting...\r\n").getBytes());
+			out.write(String.format("\r\nExiting...\r\n%s", prompt).getBytes());
 			return false;
 		} else if (hashReplies.containsKey(command.trim())) {
 			logger.info("[{}] Known command detected: {}", cmdHash, command.trim());
