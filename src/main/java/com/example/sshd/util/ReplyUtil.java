@@ -11,6 +11,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.sshd.server.session.ServerSession;
+import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,18 +34,19 @@ public class ReplyUtil {
 
 	public boolean replyToCommand(String command, OutputStream out, String prompt, ServerSession session)
 			throws IOException {
-
+		String remoteIpAddress = "";
 		String cmdHash = DigestUtils.md5Hex(command.trim()).toUpperCase();
+		if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
+			InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
+			remoteIpAddress = remoteAddress.getAddress().getHostAddress();
+		} else {
+			remoteIpAddress = session.getIoSession().getRemoteAddress().toString();
+		}
+		Thread.currentThread().setName(remoteIpAddress);
 
 		if (StringUtils.equals(command.trim(), "about")) {
 			logger.info("[{}] About command detected: {}", cmdHash, command.trim());
-			if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
-				InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
-				String remoteIpAddress = remoteAddress.getAddress().getHostAddress();
-				out.write(String.format("\r\n%s\r\n%s", ipInfoMapping.get(remoteIpAddress), prompt).getBytes());
-			} else {
-				out.write(String.format("\r\n%s\r\n%s", session.getIoSession().getRemoteAddress(), prompt).getBytes());
-			}
+			out.write(String.format("\r\n%s\r\n%s", ipInfoMapping.get(remoteIpAddress), prompt).getBytes());
 		} else if (StringUtils.equals(command.trim(), "exit")) {
 			logger.info("[{}] Exiting command detected: {}", cmdHash, command.trim());
 			out.write(String.format("\r\nExiting...\r\n%s", prompt).getBytes());
@@ -58,6 +60,11 @@ public class ReplyUtil {
 			logger.info("[{}] Known command-hash detected: {}", cmdHash, command.trim());
 			String reply = hashReplies.getProperty(cmdHash).replace("\\r", "\r").replace("\\n", "\n").replace("\\t",
 					"\t");
+			out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
+		} else if (hashReplies.containsKey(String.format("base64(%s)",cmdHash))) {
+			logger.info("[{}] Known base64-hash detected: {}", cmdHash, command.trim());
+			String reply = hashReplies.getProperty(String.format("base64(%s)",cmdHash));
+			reply = new String(Base64.decode(reply));
 			out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
 		} else {
 			Optional<Pair<String, String>> o = regexMapping.entrySet().stream()
