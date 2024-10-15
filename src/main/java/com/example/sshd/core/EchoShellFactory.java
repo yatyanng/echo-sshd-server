@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 
 import org.apache.sshd.common.Factory;
 import org.apache.sshd.server.Command;
