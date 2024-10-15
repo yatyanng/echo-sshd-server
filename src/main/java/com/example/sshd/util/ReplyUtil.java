@@ -42,28 +42,27 @@ public class ReplyUtil {
 		} else {
 			remoteIpAddress = session.getIoSession().getRemoteAddress().toString();
 		}
-		Thread.currentThread().setName(remoteIpAddress);
 
 		if (StringUtils.equals(command.trim(), "about")) {
-			logger.info("[{}] About command detected: {}", cmdHash, command.trim());
+			logger.info("[{}] {} About command detected: {}", remoteIpAddress, cmdHash, command.trim());
 			out.write(String.format("\r\n%s\r\n%s", ipInfoMapping.get(remoteIpAddress), prompt).getBytes());
 		} else if (StringUtils.equals(command.trim(), "exit")) {
-			logger.info("[{}] Exiting command detected: {}", cmdHash, command.trim());
+			logger.info("[{}] {} Exiting command detected: {}", remoteIpAddress, cmdHash, command.trim());
 			out.write(String.format("\r\nExiting...\r\n%s", prompt).getBytes());
 			return false;
 		} else if (hashReplies.containsKey(command.trim())) {
-			logger.info("[{}] Known command detected: {}", cmdHash, command.trim());
+			logger.info("[{}] {} Known command detected: {}", remoteIpAddress, cmdHash, command.trim());
 			String reply = hashReplies.getProperty(command.trim()).replace("\\r", "\r").replace("\\n", "\n")
 					.replace("\\t", "\t");
 			out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
 		} else if (hashReplies.containsKey(cmdHash)) {
-			logger.info("[{}] Known command-hash detected: {}", cmdHash, command.trim());
+			logger.info("[{}] {} Known command-hash detected: {}", remoteIpAddress, cmdHash, command.trim());
 			String reply = hashReplies.getProperty(cmdHash).replace("\\r", "\r").replace("\\n", "\n").replace("\\t",
 					"\t");
 			out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
-		} else if (hashReplies.containsKey(String.format("base64(%s)",cmdHash))) {
-			logger.info("[{}] Known base64-hash detected: {}", cmdHash, command.trim());
-			String reply = hashReplies.getProperty(String.format("base64(%s)",cmdHash));
+		} else if (hashReplies.containsKey(String.format("base64(%s)", cmdHash))) {
+			logger.info("[{}] {} Known base64-hash detected: {}", remoteIpAddress, cmdHash, command.trim());
+			String reply = hashReplies.getProperty(String.format("base64(%s)", cmdHash));
 			reply = new String(Base64.decode(reply));
 			out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
 		} else {
@@ -71,13 +70,14 @@ public class ReplyUtil {
 					.filter(e -> command.trim().matches(((String) e.getKey())))
 					.map(e -> Pair.of((String) e.getKey(), (String) e.getValue())).findAny();
 			if (o.isPresent()) {
-				logger.info("[{}] Known pattern detected: {} ({})", cmdHash, command.trim(), o.get());
+				logger.info("[{}] {} Known pattern detected: {} ({})", remoteIpAddress, cmdHash, command.trim(),
+						o.get());
 				String reply = hashReplies.getProperty(o.get().getRight(), "").replace("\\r", "\r").replace("\\n", "\n")
 						.replace("\\t", "\t");
 				out.write(String.format("\r\n%s\r\n%s", reply, prompt).getBytes());
 			} else {
-				logger.info("[{}] Command not found: {}", cmdHash, command.trim());
-				notFoundLogger.info("[{}] Command not found: {}", cmdHash, command.trim());
+				logger.info("[{}] {} Command not found: {}", remoteIpAddress, cmdHash, command.trim());
+				notFoundLogger.info("[{}] {} Command not found: {}", remoteIpAddress, cmdHash, command.trim());
 				out.write(String.format("\r\nCommand '%s' not found. Try 'exit'.\r\n%s", command.trim(), prompt)
 						.getBytes());
 			}
