@@ -1,6 +1,7 @@
 package com.example.sshd.core;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
@@ -14,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.example.sshd.service.JdbcService;
 
 @Component
 public class EchoSessionListener implements SessionListener {
@@ -29,6 +32,9 @@ public class EchoSessionListener implements SessionListener {
 
 	@Autowired
 	CloseableHttpAsyncClient asyncClient;
+
+	@Autowired
+	JdbcService jdbcService;
 
 	@Value("${ssh-server.ip-info-api.url:http://ip-api.com/json/%s}")
 	private String ipInfoApiUrl;
@@ -48,6 +54,12 @@ public class EchoSessionListener implements SessionListener {
 			}
 			logger.info("new session: {} -> {}", remoteIpAddress, session);
 			remoteSessionMapping.put(remoteIpAddress, session);
+			if (!ipInfoMapping.containsKey(remoteIpAddress)) {
+				List<Map<String, Object>> ipInfoList = jdbcService.getRemoteIpInfo(remoteIpAddress);
+				if (!ipInfoList.isEmpty()) {
+					ipInfoMapping.put(remoteIpAddress, (String) ipInfoList.get(0).get("remote_ip_info"));
+				}
+			}
 		}
 	}
 
@@ -64,15 +76,19 @@ public class EchoSessionListener implements SessionListener {
 
 							@Override
 							public void completed(SimpleHttpResponse result) {
-								logger.info("[{}] asyncClient.execute completed, result: {}, content-type: {}, body: {}",
+								logger.info(
+										"[{}] asyncClient.execute completed, result: {}, content-type: {}, body: {}",
 										remoteIpAddress, result, result.getContentType(), result.getBodyText());
 								ipInfoMapping.put(remoteIpAddress, result.getBodyText());
-								ipInfoLogger.info("[{}] {}", remoteIpAddress, ipInfoMapping.get(remoteIpAddress));
+								int inserted = jdbcService.insertRemoteIpInfo(remoteIpAddress, result.getBodyText());
+								ipInfoLogger.info("[{}] {}, inserted = {}", remoteIpAddress,
+										ipInfoMapping.get(remoteIpAddress), inserted);
 							}
 
 							@Override
 							public void failed(Exception exception) {
-								logger.info("[{}] asyncClient.execute failed, exception: {}", remoteIpAddress, exception);
+								logger.info("[{}] asyncClient.execute failed, exception: {}", remoteIpAddress,
+										exception);
 							}
 
 							@Override

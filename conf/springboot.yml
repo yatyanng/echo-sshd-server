@@ -7,3 +7,6 @@ ssh-server:
   regex-mapping:
     location: "conf/regex-mapping.properties"
 
+spring:
+  datasource:
+    url: "jdbc:h2:file:./data/remote-ip-info-db"

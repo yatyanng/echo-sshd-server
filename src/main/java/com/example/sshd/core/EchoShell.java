@@ -21,7 +21,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.example.sshd.util.ReplyUtil;
+import com.example.sshd.service.ReplyService;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -30,7 +30,7 @@ public class EchoShell implements Command, Runnable, SessionAware {
 	private static final Logger logger = LoggerFactory.getLogger(EchoShell.class);
 
 	@Autowired
-	ReplyUtil replyUtil;
+	ReplyService replyUtil;
 
 	@Autowired
 	Properties hashReplies;
