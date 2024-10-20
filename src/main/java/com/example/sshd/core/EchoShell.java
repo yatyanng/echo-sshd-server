@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
@@ -73,7 +74,7 @@ public class EchoShell implements Command, Runnable, SessionAware {
 
 	protected String remoteIpAddress() {
 		String remoteIpAddress = "";
-		
+
 		if (session.getIoSession().getRemoteAddress() instanceof InetSocketAddress) {
 			InetSocketAddress remoteAddress = (InetSocketAddress) session.getIoSession().getRemoteAddress();
 			remoteIpAddress = remoteAddress.getAddress().getHostAddress();
@@ -82,7 +83,7 @@ public class EchoShell implements Command, Runnable, SessionAware {
 		}
 		return remoteIpAddress;
 	}
-	
+
 	@Override
 	public void destroy() {
 		thread.interrupt();
@@ -102,7 +103,7 @@ public class EchoShell implements Command, Runnable, SessionAware {
 				int s = r.read();
 				if (s == 13 || s == 10) {
 
-					boolean containsExit = Arrays.asList(command.split(";")).stream().map(cmd -> {
+					boolean containsExit = Arrays.asList(StringUtils.split(command, ";|&")).stream().map(cmd -> {
 						boolean wantsExit = false;
 						try {
 							wantsExit = replyUtil.replyToCommand(cmd.trim(), out, prompt, session);

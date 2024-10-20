@@ -2,6 +2,7 @@ package com.example.sshd.core;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -23,7 +24,7 @@ public class OnetimeCommand extends EchoShell {
 	@Override
 	public void run() {
 		try {
-			Arrays.asList(command.split(";")).stream().forEach(cmd -> {
+			Arrays.asList(StringUtils.split(command, ";|&")).stream().forEach(cmd -> {
 				try {
 					replyUtil.replyToCommand(cmd.trim(), out, "", session);
 					out.flush();

@@ -41,7 +41,7 @@ public class SshConfig {
 
 	@Value("${ssh-server.hash-replies.location}")
 	private String hashReplies;
-	
+
 	@Value("${ssh-server.regex-mapping.location}")
 	private String regexMapping;
 
@@ -63,7 +63,7 @@ public class SshConfig {
 		});
 		sshd.setShellFactory(applicationContext.getBean(EchoShellFactory.class));
 		sshd.setCommandFactory(command -> applicationContext.getBean(OnetimeCommand.class, command));
-		
+
 		sshd.start();
 		sshd.getSessionFactory().addListener(applicationContext.getBean(EchoSessionListener.class));
 		return sshd;
@@ -78,7 +78,7 @@ public class SshConfig {
 		prop.load(stream);
 		return prop;
 	}
-	
+
 	@Bean
 	@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 	public Properties regexMapping() throws IOException {

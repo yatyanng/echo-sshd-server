@@ -21,7 +21,7 @@ public class AppConfig {
 	public Map<String, Session> remoteSessionMapping() {
 		return Collections.synchronizedMap(new HashMap<>());
 	}
-	
+
 	@Bean
 	@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 	public Map<String, String> ipInfoMapping() {

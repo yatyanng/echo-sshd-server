@@ -27,5 +27,5 @@ public class Boot {
 			System.setProperty("logging.config", configDirectory + "/log4j2.xml");
 		}
 		SpringApplication.run(Boot.class, args);
-	} 
+	}
 }

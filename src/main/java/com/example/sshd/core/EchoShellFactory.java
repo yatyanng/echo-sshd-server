@@ -17,5 +17,4 @@ public class EchoShellFactory implements Factory<Command> {
 		return (Command) applicationContext.getBean("echoShell");
 	}
 
-
 }
